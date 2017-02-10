@@ -11,7 +11,7 @@ const options = {
 
 //test
 var assetSchemaInsert = Joi.object().keys({
-    name: Joi.string().alphanum().min(3).max(30).required()
+    name: Joi.string().min(3).max(30).required()
 })
 
 
@@ -36,8 +36,11 @@ util.inherits(AssetWritable, Writable);
 
 AssetWritable.prototype._write = function write(doc, encoding, callback) {
     try {
+        console.log("writing", doc)
         this.obj.insert(doc, callback)
-    } catch (err) {}
+    } catch (err) {
+      console.log(err)
+    }
 };
 
 
