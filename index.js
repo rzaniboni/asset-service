@@ -26,31 +26,33 @@ var assetSchemaQuery = Joi.object().keys({
 
 
 
+function AssetWritable(obj) {
+    if (!(this instanceof AssetWritable)) return new AssetWritable(obj);
+    Writable.call(this, { objectMode: true })
+    this.obj = obj;
+}
+
+util.inherits(AssetWritable, Writable);
+
+AssetWritable.prototype._write = function write(doc, encoding, callback) {
+    try {
+        this.obj.insert(doc, callback)
+    } catch (err) {}
+};
 
 
 module.exports = function(db) {
-    return {
+    var obj = {
         createWritableStream: createWritableStream,
         insert,
         update,
         query
     };
 
-    function AssetWritable(options) {
-      if (! (this instanceof AssetWritable)) return new AssetWritable(options);
-      if (! options) options = {};
-      options.objectMode = true;
-      Writable.call(this, options);
-    }
-
-    util.inherits(AssetWritable, Writable);
-
-    AssetWritable.prototype._write = function write(doc, encoding, callback) {
-      insert(doc, callback)
-    };
+    return obj
 
     function createWritableStream() {
-      return new AssetWritable()
+        return new AssetWritable(obj)
     }
 
     function insert(object, cb) {
@@ -83,7 +85,7 @@ module.exports = function(db) {
 
 
     function query(object, cb) {
-        Joi.validate(object, assetSchemaQuery, function (err, value) {
+        Joi.validate(object, assetSchemaQuery, function(err, value) {
             if (err) return cb(err)
 
             db.get(object.id, function(err, value) {
