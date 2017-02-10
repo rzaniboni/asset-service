@@ -51,6 +51,7 @@ module.exports = function(db) {
             db.get(object.id, function(err, value) {
                 if (err) return cb(err)
                 value.status = object.status
+              
                 db.put(object.id, value, function(err) {
                     if (err) return cb(err)
                     cb()
@@ -59,11 +60,12 @@ module.exports = function(db) {
           })
     }
 
-    function query(object) {
+    function query(object, cb) {
         Joi.validate(object, assetSchemaQuery, function (err, value) {
-            if (err) cb(err)
+            if (err) return cb(err)
             db.get(object.id, function(err, value) {
                 if (err) return cb(err)
+                if (!value) return cb(new Error('no values'))
                 cb(null, value)
             })
          });
