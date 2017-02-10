@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/vivoil/asset-service#readme",
   "dependencies": {
+    "docker-namesgenerator": "0.0.1",
     "joi": "^10.2.1",
     "leveldown": "^1.6.0",
     "levelup": "^1.3.3",

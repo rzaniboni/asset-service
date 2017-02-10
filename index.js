@@ -1,6 +1,7 @@
 'use strict'
+var Writable = require('stream').Writable;
+var util = require('util');
 const levelup = require('levelup');
-//const path = require('path');
 const Joi = require('joi');
 const uuidV1 = require('uuid/v1');
 const options = {
@@ -25,13 +26,32 @@ var assetSchemaQuery = Joi.object().keys({
 
 
 
+
+
 module.exports = function(db) {
     return {
+        createWritableStream: createWritableStream,
         insert,
         update,
         query
     };
 
+    function AssetWritable(options) {
+      if (! (this instanceof AssetWritable)) return new AssetWritable(options);
+      if (! options) options = {};
+      options.objectMode = true;
+      Writable.call(this, options);
+    }
+
+    util.inherits(AssetWritable, Writable);
+
+    AssetWritable.prototype._write = function write(doc, encoding, callback) {
+      insert(doc, callback)
+    };
+
+    function createWritableStream() {
+      return new AssetWritable()
+    }
 
     function insert(object, cb) {
         Joi.validate(object, assetSchemaInsert, function(err, value) {
