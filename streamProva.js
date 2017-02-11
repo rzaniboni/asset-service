@@ -7,9 +7,9 @@ const options = {
 let db = Memdb(options)
 
 var AssetService = require('./index');
-var writeStream = AssetService(db).createWritableStream();
 
-var Readable = require('stream').Readable;
+
+var { Readable,  Transform }= require('stream')
 var util = require('util');
 var namesgenerator = require('docker-namesgenerator')
   , names = {}
@@ -30,19 +30,36 @@ util.inherits(NameGenerator, Readable);
 NameGenerator.prototype._read = function read() {
   var self = this;
   generateName(function(err, name) {
-    if (err) self.emit('error', err);
-    else self.push({name:name});
+    if (err) return self.emit('error', err);
+    self.push({name:name});
   });
 };
 
+function Manipulator(options) {
+  if (! (this instanceof Manipulator)) return new Manipulator(options);
+  if (! options) options = {};
+  options.objectMode = true;
+  Transform.call(this, options);
+}
+
+util.inherits(Manipulator, Transform)
+
+Manipulator.prototype._transform = function _transform(obj, encoding, callback) {
+  obj.status = 'created'
+  this.push(obj);
+  callback();
+};
+
+var writeStream = AssetService(db).createWritableStream();
 var namegenerator = new NameGenerator({highWaterMark: 10});
+var manipulator = new Manipulator({highWaterMark: 10});
 
 function generateName(cb){
   var checker = function(name) {
     return names.hasOwnProperty(name);
   };
-    name = namesgenerator(checker);
-    cb(null,name)
+  name = namesgenerator(checker);
+  cb(null,name)
 }
 
-namegenerator.pipe(writeStream);
+namegenerator.pipe(manipulator).pipe(writeStream)
